@@ -8,10 +8,12 @@
     <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/backend</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/venv/bin/python</string>
-        <string>manage.py</string>
-        <string>runserver</string>
+        <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/venv/bin/gunicorn</string>
+        <string>--certfile=tamers-macbook-pro.tail9125c6.ts.net.crt</string>
+        <string>--keyfile=tamers-macbook-pro.tail9125c6.ts.net.key</string>
+        <string>--bind</string>
         <string>0.0.0.0:8000</string>
+        <string>backend.wsgi:application</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-3*p0!3k@^&obx5fco@)4x(aa^a+$&lf_q55n81nqf@%we%yum6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['tamers-macbook-pro.tail9125c6.ts.net', '127.0.0.1', 'localhost', '100.115.194.77', '192.168.100.32', '*']
 
 
 # Application definition
@@ -42,11 +42,13 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local
     "inventory",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware", # CORS
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -130,6 +132,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+WHITENOISE_USE_FINDERS = True
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True
