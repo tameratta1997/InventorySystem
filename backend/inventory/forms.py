@@ -8,23 +8,21 @@ class ImportFileForm(forms.Form):
     file = forms.FileField(label='Select CSV or Excel file', widget=forms.FileInput(attrs={'class': 'form-file', 'accept': '.csv, .xlsx, .xls'}))
 
 class CustomUserCreationForm(UserCreationForm):
-    permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.none(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label="Assign Permissions (Products & Categories)"
-    )
-
     class Meta(UserCreationForm.Meta):
         model = User
         fields = UserCreationForm.Meta.fields + ('is_staff', 'is_superuser', 'email')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filter permissions for just our inventory models
-        self.fields['permissions'].queryset = Permission.objects.filter(
-            content_type__app_label='inventory',
-            content_type__model__in=['product', 'category']
+        # Add permissions field dynamically
+        self.fields['permissions'] = forms.ModelMultipleChoiceField(
+            queryset=Permission.objects.filter(
+                content_type__app_label='inventory',
+                content_type__model__in=['product', 'category']
+            ),
+            widget=forms.CheckboxSelectMultiple,
+            required=False,
+            label="Assign Permissions (Products & Categories)"
         )
 
     def save(self, commit=True):
@@ -34,22 +32,20 @@ class CustomUserCreationForm(UserCreationForm):
         return user
 
 class CustomUserChangeForm(forms.ModelForm):
-    permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.none(),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label="Assign Permissions (Products & Categories)"
-    )
-
     class Meta:
         model = User
         fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['permissions'].queryset = Permission.objects.filter(
-            content_type__app_label='inventory',
-            content_type__model__in=['product', 'category']
+        self.fields['permissions'] = forms.ModelMultipleChoiceField(
+            queryset=Permission.objects.filter(
+                content_type__app_label='inventory',
+                content_type__model__in=['product', 'category']
+            ),
+            widget=forms.CheckboxSelectMultiple,
+            required=False,
+            label="Assign Permissions (Products & Categories)"
         )
         if self.instance.pk:
             self.fields['permissions'].initial = self.instance.user_permissions.all()
@@ -75,4 +71,28 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
             'supplier_name': forms.TextInput(attrs={'class': 'form-input'}),
             'image': forms.FileInput(attrs={'class': 'form-file'}),
+        }
+
+from .models import Customer
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = ['name', 'phone', 'address', 'email']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Full Name'}),
+            'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Phone Number'}),
+             'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'Email (Optional)'}),
+            'address': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 2, 'placeholder': 'Address'}),
+        }
+
+from .models import SalesPerson
+class SalesPersonForm(forms.ModelForm):
+    class Meta:
+        model = SalesPerson
+        fields = ['name', 'phone', 'email', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Full Name'}),
+            'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Phone Number'}),
+            'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'Email (Optional)'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox h-5 w-5'}),
         }

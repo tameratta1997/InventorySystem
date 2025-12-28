@@ -8,8 +8,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 import csv
 import openpyxl
-from .models import Product, StockLog, Category
-from .forms import ProductForm, ImportFileForm, CustomUserCreationForm, CustomUserChangeForm
+from .models import Product, StockLog, Category, Sale, SaleItem, Purchase, PurchaseItem, Customer, SalesPerson
+from .forms import ProductForm, ImportFileForm, CustomUserCreationForm, CustomUserChangeForm, CustomerForm, SalesPersonForm
+from django.db.models.functions import TruncDate
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 
 @login_required
 def dashboard(request):
@@ -19,14 +22,54 @@ def dashboard(request):
     )['total_value'] or 0
     
     low_stock_products = Product.objects.filter(quantity__lte=F('min_stock_alert'))
-    recent_activity = StockLog.objects.select_related('product', 'user').order_by('-timestamp')[:5]
+    # Recent Transactions (Sales & Purchases)
+    recent_sales = Sale.objects.select_related('user').order_by('-date')[:5]
+    recent_purchases = Purchase.objects.select_related('user').order_by('-date')[:5]
+    
+    # Merge and Sort
+    transactions = []
+    for s in recent_sales:
+        transactions.append({
+            'type': 'Sale',
+            'id': s.id,
+            'order_id': s.order_id,
+            'date': s.date,
+            'user': s.user,
+            'amount': s.total_amount,
+            'items_count': s.items.count()
+        })
+    for p in recent_purchases:
+        transactions.append({
+            'type': 'Purchase',
+            'id': p.id,
+            'order_id': p.order_id,
+            'date': p.date,
+            'user': p.user,
+            'amount': p.total_amount,
+            'items_count': p.items.count()
+        })
+        
+    # Sort by date descending
+    transactions.sort(key=lambda x: x['date'], reverse=True)
+    recent_transactions = transactions[:10]
+
+    # Active Users (sessions not expired)
+    sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    uid_list = []
+    for s in sessions:
+        data = s.get_decoded()
+        uid = data.get('_auth_user_id', None)
+        if uid:
+            uid_list.append(uid)
+    active_users_count = User.objects.filter(id__in=uid_list).count()
 
     context = {
         'total_products': total_products,
         'total_stock_value': total_stock_value,
         'low_stock_count': low_stock_products.count(),
-        'recent_activity': recent_activity,
+        'recent_transactions': recent_transactions,
         'low_stock_products': low_stock_products,
+        'active_users_count': active_users_count,
     }
     return render(request, 'inventory/dashboard.html', context)
 
@@ -252,6 +295,8 @@ def user_delete(request, pk):
     
     return render(request, 'inventory/user_confirm_delete.html', {'user_to_delete': user_to_delete})
 
+# Test
+# print("Before API views block") # Removed
 # API Views
 from rest_framework import viewsets
 from .serializers import ProductSerializer, CategorySerializer
@@ -265,3 +310,319 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+# Imports moved to the top
+
+# print("Before pos_view") # Removed
+@login_required
+def pos_view(request):
+    # Initialize cart in session if not present
+    cart = request.session.get('cart', {})
+    products = Product.objects.all()
+    customers = Customer.objects.all() # Pass customers to template
+    sales_people = SalesPerson.objects.filter(is_active=True)
+    
+    # Handle Cart Actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add':
+            p_id = request.POST.get('product_id')
+            # Assuming simple qty 1 add, or input
+            try:
+                qty = int(request.POST.get('quantity', 1))
+            except ValueError:
+                qty = 1
+                
+            product = get_object_or_404(Product, id=p_id)
+            
+            # Check physical stock (ignoring session cart for a moment, or sum it up)
+            current_cart_qty = cart.get(str(p_id), {}).get('quantity', 0)
+            if product.quantity < (current_cart_qty + qty):
+                 messages.error(request, f"Not enough stock for {product.name}. Available: {product.quantity}")
+            else:
+                if str(p_id) in cart:
+                    cart[str(p_id)]['quantity'] += qty
+                else:
+                    cart[str(p_id)] = {
+                        'id': product.id,
+                        'name': product.name,
+                        'price': float(product.selling_price),
+                        'quantity': qty
+                    }
+                request.session['cart'] = cart
+                messages.success(request, f"Added {product.name}")
+
+        elif action == 'remove':
+            p_id = request.POST.get('product_id')
+            if str(p_id) in cart:
+                del cart[str(p_id)]
+                request.session['cart'] = cart
+
+        elif action == 'clear':
+            request.session['cart'] = {}
+            
+        elif action == 'checkout':
+            if not cart:
+                messages.error(request, "Cart is empty")
+            else:
+                try:
+                    # Get Customer
+                    c_id = request.POST.get('customer_id')
+                    customer = None
+                    if not c_id:
+                        messages.error(request, "Please select a Customer.")
+                        return redirect('pos')
+                        
+                    customer = Customer.objects.filter(id=c_id).first()
+                        
+                    # Get Sales Person
+                    sp_id = request.POST.get('sales_person_id')
+                    sales_person = None
+                    if not sp_id:
+                        messages.error(request, "Please select a Sales Person.")
+                        return redirect('pos')
+
+                    sales_person = SalesPerson.objects.filter(id=sp_id).first()
+
+                    # Create Sale
+                    total_amt = sum(item['quantity'] * item['price'] for item in cart.values())
+                    sale = Sale.objects.create(
+                        user=request.user, 
+                        total_amount=total_amt,
+                        customer=customer,
+                        sales_person=sales_person
+                    )
+                    
+                    for p_id, item in cart.items():
+                        product = Product.objects.get(id=p_id)
+                        qty = item['quantity']
+                        price = item['price']
+                        
+                        # Double check stock
+                        if product.quantity < qty:
+                            raise Exception(f"Stock changed! Not enough {product.name}")
+                            
+                        # Update Stock
+                        product.quantity -= qty
+                        product.save()
+                        
+                        # Create Item
+                        SaleItem.objects.create(
+                            sale=sale,
+                            product=product,
+                            quantity=qty,
+                            unit_price=price 
+                            # Note: models.py defines subtotal in save()
+                        )
+                        
+                        # Log
+                        StockLog.objects.create(
+                            product=product,
+                            user=request.user,
+                            action='SALE',
+                            quantity_change=-qty,
+                            reason=f"Sale {sale.order_id}"
+                        )
+                        
+                    # Success
+                    request.session['cart'] = {}
+                    messages.success(request, f"Sale {sale.order_id} completed successfully!")
+                    return redirect('dashboard')
+
+                except Exception as e:
+                    messages.error(request, f"Error processing sale: {str(e)}")
+                    # Delete sale if created? Transaction atomic needed ideally.
+                    
+    # Calculate Cart Total
+    cart_total = sum(item['quantity'] * item['price'] for item in cart.values())
+    
+    return render(request, 'inventory/pos.html', {
+        'products': products,
+        'cart': cart,
+        'cart_total': cart_total,
+        'customers': customers,
+        'sales_people': sales_people
+    })
+
+# Customer Views
+
+@login_required
+def customer_list(request):
+    customers = Customer.objects.all()
+    return render(request, 'inventory/customer_list.html', {'customers': customers})
+
+@login_required
+def customer_create(request):
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            customer = form.save()
+            messages.success(request, f"Customer {customer.name} added successfully.")
+            # If came from POS (next param), redirect back
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('customer_list')
+    else:
+        form = CustomerForm()
+    return render(request, 'inventory/customer_form.html', {'form': form, 'title': 'Add New Customer'})
+
+@login_required
+def customer_update(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Customer updated.")
+            return redirect('customer_list')
+    else:
+        form = CustomerForm(instance=customer)
+    return render(request, 'inventory/customer_form.html', {'form': form, 'title': 'Edit Customer'})
+
+@login_required
+def customer_delete(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    if request.method == 'POST':
+        customer.delete()
+        messages.success(request, "Customer deleted.")
+        return redirect('customer_list')
+    return render(request, 'inventory/customer_confirm_delete.html', {'customer': customer})
+
+# Sales Person Views
+
+@login_required
+def salesperson_list(request):
+    sales_people = SalesPerson.objects.all()
+    return render(request, 'inventory/salesperson_list.html', {'sales_people': sales_people})
+
+@login_required
+def salesperson_create(request):
+    if request.method == 'POST':
+        form = SalesPersonForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sales Person added.")
+            return redirect('salesperson_list')
+    else:
+        form = SalesPersonForm()
+    return render(request, 'inventory/salesperson_form.html', {'form': form, 'title': 'Add Sales Person'})
+
+@login_required
+def salesperson_update(request, pk):
+    person = get_object_or_404(SalesPerson, pk=pk)
+    if request.method == 'POST':
+        form = SalesPersonForm(request.POST, instance=person)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sales Person updated.")
+            return redirect('salesperson_list')
+    else:
+        form = SalesPersonForm(instance=person)
+    return render(request, 'inventory/salesperson_form.html', {'form': form, 'title': 'Edit Sales Person'})
+
+@login_required
+def salesperson_delete(request, pk):
+    person = get_object_or_404(SalesPerson, pk=pk)
+    if request.method == 'POST':
+        person.delete()
+        messages.success(request, "Sales Person deleted.")
+        return redirect('salesperson_list')
+    return render(request, 'inventory/salesperson_confirm_delete.html', {'person': person})
+
+@login_required
+@permission_required('inventory.add_product', raise_exception=True)
+def purchase_view(request):
+    products = Product.objects.all()
+    if request.method == 'POST':
+        p_id = request.POST.get('product_id')
+        qty_str = request.POST.get('quantity')
+        cost_str = request.POST.get('cost_price')
+        supplier = request.POST.get('supplier')
+        
+        if not p_id:
+            messages.error(request, "Please select a valid product from the dropdown.")
+            return render(request, 'inventory/purchase_form.html', {'products': products})
+
+        try:
+            qty = int(qty_str)
+            cost = float(cost_str)
+        except (ValueError, TypeError):
+             messages.error(request, "Invalid Quantity or Cost Price.")
+             return render(request, 'inventory/purchase_form.html', {'products': products})
+             
+        product = get_object_or_404(Product, id=p_id)
+        
+        # Create Purchase Record
+        purchase = Purchase.objects.create(
+            user=request.user,
+            supplier=supplier,
+            total_amount=qty * cost
+        )
+        
+        PurchaseItem.objects.create(
+            purchase=purchase,
+            product=product,
+            quantity=qty,
+            unit_cost=cost
+        )
+        
+        # Update Product Stock
+        product.quantity += qty
+        product.purchase_price = cost # Update latest cost price? Optional but useful.
+        product.save()
+        
+        # Log
+        StockLog.objects.create(
+            product=product,
+            user=request.user,
+            action='PURCHASE',
+            quantity_change=qty,
+            reason=f"Purchase {purchase.order_id}"
+        )
+        
+        messages.success(request, f"Stock added for {product.name} (Ref: {purchase.order_id})")
+        return redirect('product_list')
+        
+    return render(request, 'inventory/purchase_form.html', {'products': products})
+
+@login_required
+def report_view(request):
+    # Simple Daily Sales Report
+    sales = Sale.objects.order_by('-date')
+    
+    # Calculate Total Sales
+    total_sales = sales.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    
+    # Calculate Profit (Naive approach: SalePrice - CurrentPurchasePrice)
+    # A better way is iterating items.
+    
+    daily_sales = Sale.objects.annotate(date_only=TruncDate('date')).values('date_only').annotate(
+        total=Sum('total_amount'),
+        count=Count('id')
+    ).order_by('-date_only')
+    
+    return render(request, 'inventory/reports.html', {
+        'sales': sales,
+        'total_sales': total_sales,
+        'daily_sales': daily_sales
+    })
+
+@login_required
+def transaction_detail(request, type, id):
+    if type == 'sale':
+        transaction = get_object_or_404(Sale, id=id)
+        items = transaction.items.select_related('product').all()
+        # For sales, we show selling price
+        # item.unit_price is stored
+    elif type == 'purchase':
+        transaction = get_object_or_404(Purchase, id=id)
+        items = transaction.items.select_related('product').all()
+    else:
+        return redirect('dashboard')
+        
+    return render(request, 'inventory/transaction_detail.html', {
+        'type': type,
+        't': transaction,
+        'items': items
+    })

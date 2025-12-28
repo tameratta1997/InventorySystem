@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h1 class="mb-4" style="font-size: 1.5rem; font-weight: 700;">Receive New Stock (Purchase)</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Select Product</label>
+            <input list="products" name="product_input" class="form-input" placeholder="Type to search..."
+                onchange="updateProductId(this)" required>
+            <datalist id="products">
+                {% for p in products %}
+                <option data-id="{{ p.id }}" data-price="{{ p.purchase_price }}"
+                    data-supplier="{{ p.supplier_name|default:'' }}" value="{{ p.code }} | {{ p.name }}">
+                    {% endfor %}
+            </datalist>
+            <input type="hidden" name="product_id" id="product_id" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Supplier Name (Optional)</label>
+            <input type="text" id="supplier_input" name="supplier" class="form-input"
+                placeholder="e.g. Amazon, Local Vendor">
+        </div>
+
+        <div class="flex" style="gap: 1rem;">
+            <div class="mb-4 flex-1">
+                <label class="block text-sm font-medium mb-1">Quantity Received</label>
+                <input type="number" name="quantity" class="form-input" min="1" required>
+            </div>
+
+            <div class="mb-4 flex-1">
+                <label class="block text-sm font-medium mb-1">Unit Cost Price ($)</label>
+                <input type="number" id="cost_input" name="cost_price" class="form-input" step="0.01" min="0" required>
+                <small class="text-muted">This will update the product's default cost price.</small>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full">Confirm Stock In</button>
+    </form>
+</div>
+
+<script>
+    function updateProductId(input) {
+        const datalist = document.getElementById('products');
+        const hiddenId = document.getElementById('product_id');
+        const costInput = document.getElementById('cost_input');
+        const supplierInput = document.getElementById('supplier_input');
+        const options = datalist.options;
+
+        // Reset Logic
+        hiddenId.value = '';
+
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].value === input.value) {
+                // Determine ID
+                const pId = options[i].getAttribute('data-id');
+                hiddenId.value = pId;
+
+                // Auto-fill Price
+                const price = options[i].getAttribute('data-price');
+                if (price) {
+                    costInput.value = price;
+                }
+
+                // Auto-fill Supplier
+                const supplier = options[i].getAttribute('data-supplier');
+                if (supplier) {
+                    supplierInput.value = supplier;
+                } else {
+                    supplierInput.value = ''; // Clear if no supplier linked to product
+                }
+
+                return;
+            }
+        }
+    }
+</script>
+{% endblock %}

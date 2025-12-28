@@ -22,7 +22,7 @@
     </div>
     <div class="card">
         <div class="card-title">Active Users</div>
-        <div class="card-value">1</div> <!-- Helper placeholder -->
+        <div class="card-value">{{ active_users_count }}</div>
     </div>
 </div>
 
@@ -30,42 +30,50 @@
     <!-- Recent Activity -->
     <div class="card">
         <div class="flex justify-between items-center mb-4">
-            <h3 style="font-size: 1.125rem; font-weight: 600;">Recent Stock History</h3>
+            <h3 style="font-size: 1.125rem; font-weight: 600;">Recent Transactions</h3>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Product</th>
-                        <th>Action</th>
-                        <th>Change</th>
+                        <th>Transaction #</th>
+                        <th>Type</th>
+                        <th>Amount</th>
                         <th>User</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for log in recent_activity %}
-                    <tr>
-                        <td>{{ log.timestamp|date:"M d, H:i" }}</td>
-                        <td>{{ log.product.name }}</td>
+                    {% for t in recent_transactions %}
+                    <tr style="cursor: pointer;" onclick="openTransactionDetail('{{ t.type }}', {{ t.id }})">
+                        <td>{{ t.date|date:"M d, H:i" }}</td>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ t.order_id }}</td>
                         <td>
-                            <span
-                                class="badge {% if log.quantity_change > 0 %}badge-green{% else %}badge-red{% endif %}">
-                                {{ log.action }}
+                            <span class="badge {% if t.type == 'Sale' %}badge-green{% else %}badge-red{% endif %}">
+                                {{ t.type }}
                             </span>
                         </td>
-                        <td>{{ log.quantity_change }}</td>
-                        <td>{{ log.user.username }}</td>
+                        <td>${{ t.amount }}</td>
+                        <td>{{ t.user.username }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No recent activity.</td>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No recent transactions.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        function openTransactionDetail(type, id) {
+            // Open a small popup window
+            const url = `/transaction/${type.toLowerCase()}/${id}/`;
+            window.open(url, 'Transaction Detail', 'width=800,height=600,resizable=yes,scrollbars=yes');
+        }
+    </script>
 
     <!-- Low Stock List -->
     <div class="card">

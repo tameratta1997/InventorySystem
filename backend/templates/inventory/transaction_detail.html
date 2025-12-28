@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Detail - {{ t.order_id }}</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 2rem;
+            color: #111827;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+
+        .meta {
+            text-align: right;
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+
+        .title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 1px solid #E5E7EB;
+            padding: 0.5rem;
+        }
+
+        td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .total-row {
+            font-weight: bold;
+            font-size: 1.125rem;
+            text-align: right;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            background: #E5E7EB;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 500;
+            text-decoration: none;
+            color: black;
+        }
+
+        .btn-print {
+            background: #4F46E5;
+            color: white;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print" style="margin-bottom: 1rem; text-align: right;">
+        <button onclick="window.print()" class="btn btn-print">Print / Save as PDF</button>
+        <button onclick="window.close()" class="btn">Close</button>
+    </div>
+
+    <div class="header">
+        <div>
+            <div class="logo">Inventory System</div>
+            <div>Transaction Receipt</div>
+        </div>
+        <div class="meta">
+            <div><strong>Order ID:</strong> {{ t.order_id }}</div>
+            <div><strong>Date:</strong> {{ t.date|date:"M d, Y H:i" }}</div>
+            <div><strong>By:</strong> {{ t.user.username }}</div>
+            {% if type == 'purchase' and t.supplier %}
+            <div><strong>Supplier:</strong> {{ t.supplier }}</div>
+            {% endif %}
+            {% if t.customer %}
+            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #E5E7EB;">
+                <strong>Customer:</strong> {{ t.customer.name }}<br>
+                {{ t.customer.phone }}<br>
+                {{ t.customer.address|linebreaksbr }}
+            </div>
+            {% endif %}
+            {% if t.sales_person %}
+            <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #E5E7EB;">
+                <strong>Sales Rep:</strong> {{ t.sales_person.name }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 class="title">
+        {% if type == 'sale' %}Sales Receipt{% else %}Purchase Order{% endif %}
+    </h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>
+                    {{ item.product.name }}
+                    <div style="font-size: 0.75rem; color: #6B7280;">{{ item.product.code }}</div>
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td style="text-align: right;">
+                    {% if type == 'sale' %}${{ item.unit_price }}
+                    {% else %}${{ item.unit_cost }}{% endif %}
+                </td>
+                <td style="text-align: right;">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-row">
+        Total Amount: ${{ t.total_amount }}
+    </div>
+
+    {% if t.note %}
+    <div style="margin-top: 2rem;">
+        <strong>Notes:</strong>
+        <p>{{ t.note }}</p>
+    </div>
+    {% endif %}
+
+</body>
+
+</html>

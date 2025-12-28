@@ -31,8 +31,26 @@
                 <a href="{% url 'user_list' %}"
                     class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">Users</a>
                 {% endif %}
-                <a href="#" class="nav-link">Sales (Soon)</a>
-                <a href="#" class="nav-link">Reports (Soon)</a>
+                <a href="{% url 'pos' %}"
+                    class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
+                    🛒 New Sale (POS)
+                </a>
+                <a href="{% url 'purchase' %}"
+                    class="nav-link {% if 'purchase' in request.resolver_match.url_name %}active{% endif %}">
+                    🚚 Add Stock
+                </a>
+                <a href="{% url 'reports' %}"
+                    class="nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+                    📊 Reports
+                </a>
+                <a href="{% url 'customer_list' %}"
+                    class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                    👥 Customers
+                </a>
+                <a href="{% url 'salesperson_list' %}"
+                    class="nav-link {% if 'salesperson' in request.resolver_match.url_name %}active{% endif %}">
+                    👔 Sales Staff
+                </a>
             </nav>
             <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid #374151;">
                 <div style="font-size: 0.875rem; color: #9CA3AF;">
