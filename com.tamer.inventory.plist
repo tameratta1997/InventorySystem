@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.tamer.inventory</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/backend</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/venv/bin/python</string>
+        <string>manage.py</string>
+        <string>runserver</string>
+        <string>0.0.0.0:8000</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/inventory_sys.out</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/inventory_sys.err</string>
+</dict>
+</plist>

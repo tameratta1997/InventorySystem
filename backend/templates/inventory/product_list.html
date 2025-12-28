@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <div>
+        <h1 style="font-size: 1.875rem; font-weight: 700;">Products</h1>
+        <p class="text-muted">Manage your product catalog.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if perms.inventory.add_product %}
+        <a href="{% url 'product_import' %}" class="btn"
+            style="background-color: var(--secondary-color); color: white;"> Import CSV/Excel</a>
+        <a href="{% url 'product_create' %}" class="btn btn-primary"> + Add Product </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <!-- Search Bar -->
+    <form method="GET" class="flex mb-4" style="gap: 1rem;" onsubmit="return false;">
+        <input id="search-input" type="search" name="q" class="form-input" placeholder="Search by name or code..."
+            value="{{ request.GET.q|default:'' }}" style="max-width: 300px;">
+        <button type="submit" class="btn"
+            style="background-color: var(--secondary-color); color: white;">Search</button>
+    </form>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price (Buy/Sell)</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="product-table-body">
+                {% for product in products %}
+                <tr>
+                    <td>
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="img"
+                            style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                        {% else %}
+                        <div style="width: 40px; height: 40px; background: #E5E7EB; border-radius: 4px;"></div>
+                        {% endif %}
+                    </td>
+                    <td style="font-family: monospace;">{{ product.code }}</td>
+                    <td style="font-weight: 500;">{{ product.name }}</td>
+                    <td>
+                        <span class="badge" style="background: #F3F4F6; color: #374151;">
+                            {% if product.category %}
+                            {{ product.category.name }}
+                            {% else %}
+                            Uncategorized
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem;">Buy: ${{ product.purchase_price }}</div>
+                        <div style="font-weight: 600;">Sell: ${{ product.selling_price }}</div>
+                    </td>
+                    <td>
+                        <span class="badge {% if product.is_low_stock %}badge-red{% else %}badge-green{% endif %}">
+                            {{ product.quantity }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if perms.inventory.change_product %}
+                        <a href="{% url 'product_update' product.pk %}" class="btn"
+                            style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #DBEAFE; color: #1E40AF;">Edit</a>
+                        {% endif %}
+                        {% if perms.inventory.delete_product %}
+                        <a href="{% url 'product_delete' product.pk %}" class="btn"
+                            style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #FEE2E2; color: #991B1B;">Del</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem;">No products found. Add one!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('search-input');
+        const tableBody = document.getElementById('product-table-body');
+        let timeout = null;
+
+        if (searchInput && tableBody) {
+            searchInput.addEventListener('input', function (e) {
+                clearTimeout(timeout);
+                const query = e.target.value.trim();
+
+                timeout = setTimeout(() => {
+                    // Update URL without reloading (optional)
+                    // window.history.replaceState(null, '', `?q=${encodeURIComponent(query)}`);
+
+                    const url = `${window.location.pathname}?q=${encodeURIComponent(query)}`;
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newBody = doc.getElementById('product-table-body');
+
+                            if (newBody) {
+                                tableBody.innerHTML = newBody.innerHTML;
+                            }
+                        })
+                        .catch(err => console.error('Search failed:', err));
+                }, 100); // 100ms debounce for near-instant feel
+            });
+        }
+    });
+</script>
+{% endblock %}
