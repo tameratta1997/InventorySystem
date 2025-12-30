@@ -7,7 +7,12 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 import csv
-import openpyxl
+import csv
+try:
+    import openpyxl
+except ImportError:
+    openpyxl = None
+
 from .models import Product, StockLog, Category, Sale, SaleItem, Purchase, PurchaseItem, Customer, SalesPerson
 from .forms import ProductForm, ImportFileForm, CustomUserCreationForm, CustomUserChangeForm, CustomerForm, SalesPersonForm
 from django.db.models.functions import TruncDate
