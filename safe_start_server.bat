@@ -37,7 +37,11 @@ if not exist "%VENV_NAME%" (
 echo [INFO] Activating environment...
 call %VENV_NAME%\Scripts\activate
 
-:: 3. Install dependencies
+:: 3. Upgrade Pip
+echo [INFO] Upgrading Pip...
+python -m pip install --upgrade pip --quiet --trusted-host pypi.org --trusted-host files.pythonhosted.org
+
+:: 4. Install dependencies
 echo [INFO] Checking/Installing dependencies...
 pip install -r requirements.txt --quiet
 
