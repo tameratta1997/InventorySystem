@@ -35,36 +35,54 @@ if not exist "%VENV_NAME%" (
 
 :: 2. Activate environment
 echo [INFO] Activating environment...
-call %VENV_NAME%\Scripts\activate
+set PYTHON_EXE=%VENV_NAME%\Scripts\python.exe
+set PIP_EXE=%VENV_NAME%\Scripts\pip.exe
 
 :: 3. Upgrade Pip
 echo [INFO] Upgrading Pip...
-python -m pip install --upgrade pip --quiet --trusted-host pypi.org --trusted-host files.pythonhosted.org
+"%PYTHON_EXE%" -m pip install --upgrade pip --quiet --trusted-host pypi.org --trusted-host files.pythonhosted.org
 
 :: 4. Install dependencies
 echo [INFO] Checking/Installing dependencies...
-pip install -r requirements.txt --quiet
+"%PIP_EXE%" install -r requirements.txt --quiet --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host files.pythonhosted.org
 
-:: 4. Run migrations
-echo [INFO] Running database migrations...
-python backend\manage.py migrate
+:: 5. Run migrations
+echo [INFO] Syncing database changes...
+"%PYTHON_EXE%" backend\manage.py makemigrations --noinput
+"%PYTHON_EXE%" backend\manage.py migrate --noinput
 
-:: 5. Collect static files
+:: 6. Collect static files
 echo [INFO] Collecting static files...
-python backend\manage.py collectstatic --noinput
+"%PYTHON_EXE%" backend\manage.py collectstatic --noinput
 
-:: 6. Database Backup (Crash Protection)
+:: 7. Database Backup (Crash Protection)
 if not exist "backups" mkdir backups
 set TIMESTAMP=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%_%TIME:~0,2%-%TIME:~3,2%-%TIME:~6,2%
 set TIMESTAMP=%TIMESTAMP: =0%
 echo [INFO] Backing up database...
 copy backend\db.sqlite3 backups\db_backup_%TIMESTAMP%.sqlite3 >nul
 
-:: 7. Start server
+:: 8. Start server
 echo ==========================================
 echo [INFO] Starting server...
+
+set CERT=backend\tamers-macbook-pro.tail9125c6.ts.net.crt
+set KEY=backend\tamers-macbook-pro.tail9125c6.ts.net.key
+
+if exist "%CERT%" (
+    if exist "%KEY%" (
+        echo [INFO] SSL Detected. Starting Secure Server (HTTPS)...
+        echo Access the system at: https://127.0.0.1:8000/
+        echo ==========================================
+        cd backend
+        ..\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile=tamers-macbook-pro.tail9125c6.ts.net.crt --ssl-keyfile=tamers-macbook-pro.tail9125c6.ts.net.key
+        exit /b
+    )
+)
+
+echo [WARN] SSL not found. Starting Standard Server (HTTP)...
 echo Access the system at: http://127.0.0.1:8000/
 echo ==========================================
-python backend\manage.py runserver 0.0.0.0:8000
+"%PYTHON_EXE%" backend\manage.py runserver 0.0.0.0:8000
 
 pause
