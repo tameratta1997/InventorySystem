@@ -66,18 +66,31 @@ copy backend\db.sqlite3 backups\db_backup_%TIMESTAMP%.sqlite3 >nul
 echo ==========================================
 echo [INFO] Starting server...
 
-set CERT=backend\tamers-macbook-pro.tail9125c6.ts.net.crt
-set KEY=backend\tamers-macbook-pro.tail9125c6.ts.net.key
+:: 8.1 Try Windows Tailscale Certs
+set WIN_CERT=backend\minint-5rjphna.tail9125c6.ts.net.crt
+set WIN_KEY=backend\minint-5rjphna.tail9125c6.ts.net.key
 
-if exist "%CERT%" (
-    if exist "%KEY%" (
-        echo [INFO] SSL Detected. Starting Secure Server (HTTPS)...
-        echo Access the system at: https://127.0.0.1:8000/
-        echo ==========================================
-        cd backend
-        ..\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile=tamers-macbook-pro.tail9125c6.ts.net.crt --ssl-keyfile=tamers-macbook-pro.tail9125c6.ts.net.key
-        exit /b
-    )
+:: 8.2 Try Mac Tailscale Certs
+set MAC_CERT=backend\tamers-macbook-pro.tail9125c6.ts.net.crt
+set MAC_KEY=backend\tamers-macbook-pro.tail9125c6.ts.net.key
+
+if exist "%WIN_CERT%" (
+    echo [INFO] Windows SSL Detected...
+    set USE_CERT=minint-5rjphna.tail9125c6.ts.net.crt
+    set USE_KEY=minint-5rjphna.tail9125c6.ts.net.key
+) else if exist "%MAC_CERT%" (
+    echo [INFO] Mac SSL Detected...
+    set USE_CERT=tamers-macbook-pro.tail9125c6.ts.net.crt
+    set USE_KEY=tamers-macbook-pro.tail9125c6.ts.net.key
+)
+
+if defined USE_CERT (
+    echo [INFO] Starting Secure Server (HTTPS)...
+    echo Access the system at: https://127.0.0.1:8000/
+    echo ==========================================
+    cd backend
+    ..\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"
+    exit /b
 )
 
 echo [WARN] SSL not found. Starting Standard Server (HTTP)...
