@@ -4,24 +4,18 @@
 <dict>
     <key>Label</key>
     <string>com.tamer.inventory</string>
-    <key>WorkingDirectory</key>
-    <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/backend</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/venv/bin/gunicorn</string>
-        <string>--certfile=tamers-macbook-pro.tail9125c6.ts.net.crt</string>
-        <string>--keyfile=tamers-macbook-pro.tail9125c6.ts.net.key</string>
-        <string>--bind</string>
-        <string>0.0.0.0:8000</string>
-        <string>backend.wsgi:application</string>
+        <string>/bin/bash</string>
+        <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/safe_start_server.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/inventory_sys.out</string>
+    <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/backend/plist.out</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/inventory_sys.err</string>
+    <string>/Users/tamerelwakeel/Documents/Python_Projects/Python_Diploma/InventorySystem/backend/plist.err</string>
 </dict>
 </plist>
