@@ -98,7 +98,7 @@ if defined USE_CERT (
     echo [INFO] HTTPS Mode Enabled.
     echo Access: https://127.0.0.1:8000/
     echo ==========================================
-    .\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"
+    .\venv_prod\Scripts\uvicorn core.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"
     pause
     exit /b
 )

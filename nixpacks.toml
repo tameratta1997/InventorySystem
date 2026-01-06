@@ -5,4 +5,4 @@ nixPkgs = ["python311", "postgresql", "gcc", "zlib", "libjpeg", "openjpeg", "pkg
 cmds = ["python -m pip install -U pip", "python -m pip install -r requirements.txt"]
 
 [start]
-cmd = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && PYTHONPATH=. gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT} --log-file -"
+cmd = "bash start.sh"
