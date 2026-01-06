@@ -1,9 +1,8 @@
 [phases.setup]
-# Use Python 3.10 and include libraries for Pillow/Postgres
 nixPkgs = ["python310", "postgresql", "gcc", "zlib", "libjpeg", "openjpeg", "pkg-config", "monitor", "procps"]
 
 [phases.install]
 cmds = ["python -m pip install -U pip", "python -m pip install -r requirements.txt"]
 
 [start]
-cmd = "cd backend && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn backend.wsgi --log-file -"
+cmd = "sh -c 'cd backend && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn backend.wsgi --log-file -'"
