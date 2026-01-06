@@ -30,6 +30,8 @@
                 {% if request.user.is_superuser %}
                 <a href="{% url 'user_list' %}"
                     class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">Users</a>
+                <a href="{% url 'store_list' %}"
+                    class="nav-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}">🏢 Stores</a>
                 {% endif %}
                 <a href="{% url 'pos' %}"
                     class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
@@ -65,11 +67,15 @@
                     </button>
                 </form>
             </div>
-            
+
             <!-- Developer Credit -->
             <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #374151; text-align: center;">
-                <span style="display: block; font-size: 0.7rem; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Developed By</span>
-                <span style="background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.95rem; font-family: sans-serif; letter-spacing: 0.5px;">Tamer Elwakeel</span>
+                <span
+                    style="display: block; font-size: 0.7rem; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Developed
+                    By</span>
+                <span
+                    style="background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.95rem; font-family: sans-serif; letter-spacing: 0.5px;">Tamer
+                    Elwakeel</span>
             </div>
         </aside>
 

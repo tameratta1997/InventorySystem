@@ -14,6 +14,10 @@ set "STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
 set "SCRIPT_PATH=%~f0"
 set "SHORTCUT_PATH=%STARTUP_DIR%\InventoryServer.lnk"
 
+:: 0.1 Kill Existing Server (Port 8000)
+echo [INFO] checking for existing server instances...
+powershell -Command "Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force; Write-Host 'Stopped existing process' }"
+
 if not exist "%SHORTCUT_PATH%" (
     powershell -ExecutionPolicy Bypass -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT_PATH%'); $Shortcut.TargetPath = '%SCRIPT_PATH%'; $Shortcut.WorkingDirectory = '%~dp0'; $Shortcut.Save()"
     echo [OK] Added to Windows Startup.
@@ -51,6 +55,10 @@ echo [INFO] Syncing database changes...
 "%PYTHON_EXE%" backend\manage.py makemigrations --noinput
 "%PYTHON_EXE%" backend\manage.py migrate --noinput
 
+:: 5.1 Ensure Default Store (Multi-Store Support)
+echo [INFO] Validating Store Setup...
+"%PYTHON_EXE%" -c "import sys, os; sys.path.append(os.path.join(os.getcwd(), 'backend')); os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings'); import django; django.setup(); from inventory.models import Store; Store.objects.get_or_create(name='Main Store', defaults={'location': 'Default'})"
+
 :: 6. Collect static files
 echo [INFO] Collecting static files...
 "%PYTHON_EXE%" backend\manage.py collectstatic --noinput
@@ -78,21 +86,17 @@ if exist "%WIN_CERT%" (
     echo [INFO] Windows SSL Detected...
     set "USE_CERT=minint-5rjphna.tail9125c6.ts.net.crt"
     set "USE_KEY=minint-5rjphna.tail9125c6.ts.net.key"
-    goto :SSL_FOUND
 )
 
 if exist "%MAC_CERT%" (
     echo [INFO] Mac SSL Detected...
     set "USE_CERT=tamers-macbook-pro.tail9125c6.ts.net.crt"
     set "USE_KEY=tamers-macbook-pro.tail9125c6.ts.net.key"
-    goto :SSL_FOUND
 )
 
-:SSL_FOUND
-
 if defined USE_CERT (
-    echo [INFO] Starting Secure Server (HTTPS)...
-    echo Access the system at: https://127.0.0.1:8000/
+    echo [INFO] HTTPS Mode Enabled.
+    echo Access: https://127.0.0.1:8000/
     echo ==========================================
     cd backend
     ..\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"

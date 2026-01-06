@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
+    <h1 class="text-2xl font-bold mb-4 text-red-600">Delete Store?</h1>
+    <p class="mb-4">Are you sure you want to delete the store: <strong>{{ store.name }}</strong>?</p>
+
+    <div class="alert alert-warning mb-6"
+        style="background-color: #FEF2F2; color: #991B1B; padding: 1rem; border-radius: 4px;">
+        Warning: This will delete all Stock records associated with this store.
+        If any Sales or Transfers are linked to this store, the deletion might fail or require cleanup.
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="flex justify-center gap-4">
+            <a href="{% url 'store_list' %}" class="btn" style="background-color: #9CA3AF; color: white;">Cancel</a>
+            <button type="submit" class="btn" style="background-color: #DC2626; color: white;">Confirm Delete</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

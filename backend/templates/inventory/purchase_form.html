@@ -8,6 +8,15 @@
         {% csrf_token %}
 
         <div class="mb-4">
+            <label class="block text-sm font-medium mb-1">Destination Store (Receiving)</label>
+            <select name="store_id" class="form-select" required>
+                {% for s in stores %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-4">
             <label class="block text-sm font-medium mb-1">Select Product</label>
             <input list="products" name="product_input" class="form-input" placeholder="Type to search..."
                 onchange="updateProductId(this)" required>

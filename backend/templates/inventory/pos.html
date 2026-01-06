@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="flex justify-between items-center mb-4">
-    <h1 style="font-size: 1.875rem; font-weight: 700;">Point of Sale (POS)</h1>
+    <h1 style="font-size: 1.875rem; font-weight: 700;">Point of Sale & Transfers</h1>
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
@@ -19,7 +19,7 @@
                         <th>Code</th>
                         <th>Product</th>
                         <th>Price</th>
-                        <th>Stock</th>
+                        <th>Global Stock</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -31,22 +31,18 @@
                         <td>${{ p.selling_price }}</td>
                         <td>
                             <span class="badge {% if p.quantity <= 0 %}badge-red{% else %}badge-green{% endif %}">
-                                {{ p.quantity }}
+                                {{ p.total_stock }}
                             </span>
                         </td>
                         <td>
-                            {% if p.quantity > 0 %}
                             <form method="POST" style="display: flex; align-items: center; gap: 5px;">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="add">
                                 <input type="hidden" name="product_id" value="{{ p.id }}">
-                                <input type="number" name="quantity" value="1" min="1" max="{{ p.quantity }}"
+                                <input type="number" name="quantity" value="1" min="1"
                                     style="width: 50px; padding: 2px;" class="form-input">
                                 <button type="submit" class="btn btn-primary" style="padding: 2px 8px;">Add</button>
                             </form>
-                            {% else %}
-                            <span class="text-muted">Out of Stock</span>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -57,37 +53,75 @@
 
     <!-- RIGHT: Cart -->
     <div class="card" style="height: fit-content; position: sticky; top: 1rem;">
-        <h2 class="mb-4" style="font-size: 1.25rem;">Current Cart</h2>
+        <h2 class="mb-4" style="font-size: 1.25rem;">Transaction Details</h2>
 
-        <div class="mb-4">
-            <h3 class="mb-2 font-bold">Select Customer</h3>
-            <form method="POST" style="flex: 1;" id="checkout-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="checkout">
+        <form method="POST" id="checkout-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="checkout">
 
+            <!-- Context: Where is stock coming FROM? -->
+            <div class="mb-4 p-2" style="background: #eff6ff; border-radius: 4px; border: 1px solid #10b981;">
+                <label class="block text-sm font-bold mb-1">Stock Leaving From (Source Store):</label>
+                <select name="source_store_id" class="form-select" required>
+                    {% for s in stores %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Transaction Type -->
+            <div class="mb-4">
+                <label class="block text-sm font-bold mb-2">Type:</label>
+                <div class="flex gap-4">
+                    <label>
+                        <input type="radio" name="sale_type" value="sale" checked onclick="toggleType('sale')"> Sale
+                        (Customer)
+                    </label>
+                    <label>
+                        <input type="radio" name="sale_type" value="transfer" onclick="toggleType('transfer')"> Transfer
+                        (Internal)
+                    </label>
+                </div>
+            </div>
+
+            <!-- SALE FIELDS -->
+            <div id="sale-fields">
+                <h3 class="mb-2 font-bold">Select Customer</h3>
                 <div class="flex" style="gap: 5px; margin-bottom: 1rem;">
-                    <select name="customer_id" class="form-select" required>
+                    <select name="customer_id" class="form-select">
                         <option value="">-- Select Customer --</option>
                         {% for c in customers %}
                         <option value="{{ c.id }}">{{ c.name }} - {{ c.phone }}</option>
                         {% endfor %}
                     </select>
                     <a href="{% url 'customer_create' %}?next={% url 'pos' %}" class="btn"
-                        style="background-color: #10B981; color: white;">+ New</a>
+                        style="background-color: #10B981; color: white;">+</a>
                 </div>
 
                 <h3 class="mb-2 font-bold">Select Sales Person</h3>
                 <div class="mb-4">
-                    <select name="sales_person_id" class="form-select" required>
+                    <select name="sales_person_id" class="form-select">
                         <option value="">-- Select Sales Person --</option>
                         {% for sp in sales_people %}
                         <option value="{{ sp.id }}">{{ sp.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <!-- Form continues below... -->
-            </form>
-        </div>
+            </div>
+
+            <!-- TRANSFER FIELDS -->
+            <div id="transfer-fields" style="display: none;">
+                <h3 class="mb-2 font-bold text-red-600">Destination Store</h3>
+                <div class="mb-4">
+                    <select name="dest_store_id" class="form-select">
+                        <option value="">-- Select Destination --</option>
+                        {% for s in stores %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
 
         {% if cart %}
         <div class="mb-4">
@@ -96,7 +130,7 @@
                     <tr>
                         <th>Item</th>
                         <th>Qty</th>
-                        <th>Subtotal</th>
+                        <th>Price</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -106,7 +140,6 @@
                         <td>{{ item.name }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>${{ item.price }}</td>
-                        <!-- Display unit price or subtotal? Let's fix in view next time, here cart has unit price -->
                         <td>
                             <form method="POST">
                                 {% csrf_token %}
@@ -124,8 +157,9 @@
         <div style="border-top: 2px solid #E5E7EB; padding-top: 1rem; margin-top: 1rem;">
             <div class="flex justify-between" style="font-size: 1.25rem; font-weight: bold;">
                 <span>Total:</span>
-                <span>${{ cart_total|floatformat:2 }}</span>
+                <span id="cart-total-display">${{ cart_total|floatformat:2 }}</span>
             </div>
+            <p id="transfer-note" class="text-xs text-red-500 hidden mt-1">Internal Transfer Cost: $0.00</p>
         </div>
 
         <div class="flex mt-4" style="gap: 1rem;">
@@ -134,7 +168,7 @@
                 <input type="hidden" name="action" value="clear">
                 <button type="submit" class="btn w-full" style="background-color: #EF4444; color: white;">Clear</button>
             </form>
-            <button type="submit" form="checkout-form" class="btn btn-primary w-full">Checkout</button>
+            <button type="submit" form="checkout-form" class="btn btn-primary w-full">Complete</button>
         </div>
 
         {% else %}
@@ -156,6 +190,25 @@
                 row.style.display = 'none';
             }
         });
+    }
+
+    function toggleType(type) {
+        const saleFields = document.getElementById('sale-fields');
+        const transferFields = document.getElementById('transfer-fields');
+        const totalDisplay = document.getElementById('cart-total-display');
+        const transferNote = document.getElementById('transfer-note');
+
+        if (type === 'transfer') {
+            saleFields.style.display = 'none';
+            transferFields.style.display = 'block';
+            transferNote.style.display = 'block';
+            totalDisplay.style.textDecoration = 'line-through';
+        } else {
+            saleFields.style.display = 'block';
+            transferFields.style.display = 'none';
+            transferNote.style.display = 'none';
+            totalDisplay.style.textDecoration = 'none';
+        }
     }
 </script>
 {% endblock %}

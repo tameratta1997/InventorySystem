@@ -1,5 +1,5 @@
 from django import forms
-from .models import Product
+from .models import Product, Customer, SalesPerson, Store
 
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Permission
@@ -66,14 +66,17 @@ class ProductForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),
             'purchase_price': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
             'selling_price': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-input'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-input', 'readonly': 'readonly', 'title': 'Manage stock via Purchase/Transfer'}),
             'min_stock_alert': forms.NumberInput(attrs={'class': 'form-input'}),
             'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
             'supplier_name': forms.TextInput(attrs={'class': 'form-input'}),
             'image': forms.FileInput(attrs={'class': 'form-file'}),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make quantity readonly as it's now aggregate
+        self.fields['quantity'].help_text = "Global Total. To add stock, use 'Add Stock' page."
 
-from .models import Customer
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
@@ -85,7 +88,6 @@ class CustomerForm(forms.ModelForm):
             'address': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 2, 'placeholder': 'Address'}),
         }
 
-from .models import SalesPerson
 class SalesPersonForm(forms.ModelForm):
     class Meta:
         model = SalesPerson
@@ -95,4 +97,13 @@ class SalesPersonForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Phone Number'}),
             'email': forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'Email (Optional)'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox h-5 w-5'}),
+        }
+
+class StoreForm(forms.ModelForm):
+    class Meta:
+        model = Store
+        fields = ['name', 'location']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Store Name'}),
+            'location': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Address / Info'}),
         }

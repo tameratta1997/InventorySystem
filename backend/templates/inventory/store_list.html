@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Manage Stores</h1>
+    <a href="{% url 'store_create' %}" class="btn btn-primary">+ Add New Store</a>
+</div>
+
+<div class="card">
+    <table class="w-full">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Location/Address</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in stores %}
+            <tr>
+                <td>{{ s.name }}</td>
+                <td>{{ s.location }}</td>
+                <td>
+                    <a href="{% url 'store_update' s.pk %}" class="btn btn-sm"
+                        style="background-color: #3B82F6; color: white;">Edit</a>
+                    <a href="{% url 'store_delete' s.pk %}" class="btn btn-sm"
+                        style="background-color: #EF4444; color: white;">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center text-muted">No stores found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -34,6 +34,11 @@ urlpatterns = [
     path('salespeople/import/', views.salesperson_import, name='salesperson_import'),
     path('salespeople/<int:pk>/edit/', views.salesperson_update, name='salesperson_update'),
     path('salespeople/<int:pk>/delete/', views.salesperson_delete, name='salesperson_delete'),
+    
+    path('stores/', views.store_list, name='store_list'),
+    path('stores/add/', views.store_create, name='store_create'),
+    path('stores/<int:pk>/edit/', views.store_update, name='store_update'),
+    path('stores/<int:pk>/delete/', views.store_delete, name='store_delete'),
 ]
 
 from rest_framework.routers import DefaultRouter
