@@ -150,4 +150,4 @@ CORS_ALLOW_ALL_ORIGINS = True
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
-CSRF_TRUSTED_ORIGINS = ['https://minint-5rjphna.tail9125c6.ts.net', 'https://127.0.0.1']
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "https://minint-5rjphna.tail9125c6.ts.net,https://127.0.0.1").split(",")
