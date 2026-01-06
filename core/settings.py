@@ -29,6 +29,14 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
+# Security settings for production
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+
 
 # Application definition
 
@@ -150,4 +158,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "https://minint-5rjphna.tail9125c6.ts.net,https://127.0.0.1").split(",")
+# CSRF Trusted Origins
+csrf_trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if csrf_trusted:
+    CSRF_TRUSTED_ORIGINS = csrf_trusted.split(",")
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://minint-5rjphna.tail9125c6.ts.net",
+        "https://127.0.0.1",
+        "http://localhost",
+        "http://127.0.0.1"
+    ]
+
