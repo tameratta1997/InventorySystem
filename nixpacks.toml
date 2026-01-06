@@ -4,8 +4,6 @@ nixPkgs = ["python3", "postgresql"]
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
-[phases.build]
-cmds = ["python backend/manage.py collectstatic --noinput"]
-
+# We moved commands to 'start' to avoid build-time errors
 [start]
-cmd = "cd backend && gunicorn backend.wsgi --log-file -"
+cmd = "cd backend && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn backend.wsgi --log-file -"
