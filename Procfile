@@ -1,1 +1,1 @@
-web: cd backend && gunicorn backend.wsgi --log-file -
+web: bash start_server.sh
