@@ -52,35 +52,35 @@ echo [INFO] Checking/Installing dependencies...
 
 :: 5. Run migrations
 echo [INFO] Syncing database changes...
-"%PYTHON_EXE%" backend\manage.py makemigrations --noinput
-"%PYTHON_EXE%" backend\manage.py migrate --noinput
+"%PYTHON_EXE%" manage.py makemigrations --noinput
+"%PYTHON_EXE%" manage.py migrate --noinput
 
 :: 5.1 Ensure Default Store (Multi-Store Support)
 echo [INFO] Validating Store Setup...
-"%PYTHON_EXE%" -c "import sys, os; sys.path.append(os.path.join(os.getcwd(), 'backend')); os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings'); import django; django.setup(); from inventory.models import Store; Store.objects.get_or_create(name='Main Store', defaults={'location': 'Default'})"
+"%PYTHON_EXE%" -c "import sys, os; sys.path.append(os.getcwd()); os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings'); import django; django.setup(); from inventory.models import Store; Store.objects.get_or_create(name='Main Store', defaults={'location': 'Default'})"
 
 :: 6. Collect static files
 echo [INFO] Collecting static files...
-"%PYTHON_EXE%" backend\manage.py collectstatic --noinput
+"%PYTHON_EXE%" manage.py collectstatic --noinput
 
 :: 7. Database Backup (Crash Protection)
 if not exist "backups" mkdir backups
 set TIMESTAMP=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%_%TIME:~0,2%-%TIME:~3,2%-%TIME:~6,2%
 set TIMESTAMP=%TIMESTAMP: =0%
 echo [INFO] Backing up database...
-copy backend\db.sqlite3 backups\db_backup_%TIMESTAMP%.sqlite3 >nul
+copy db.sqlite3 backups\db_backup_%TIMESTAMP%.sqlite3 >nul
 
 :: 8. Start server
 echo ==========================================
 echo [INFO] Starting server...
 
 :: 8.1 Try Windows Tailscale Certs
-set WIN_CERT=backend\minint-5rjphna.tail9125c6.ts.net.crt
-set WIN_KEY=backend\minint-5rjphna.tail9125c6.ts.net.key
+set WIN_CERT=minint-5rjphna.tail9125c6.ts.net.crt
+set WIN_KEY=minint-5rjphna.tail9125c6.ts.net.key
 
 :: 8.2 Try Mac Tailscale Certs
-set MAC_CERT=backend\tamers-macbook-pro.tail9125c6.ts.net.crt
-set MAC_KEY=backend\tamers-macbook-pro.tail9125c6.ts.net.key
+set MAC_CERT=tamers-macbook-pro.tail9125c6.ts.net.crt
+set MAC_KEY=tamers-macbook-pro.tail9125c6.ts.net.key
 
 if exist "%WIN_CERT%" (
     echo [INFO] Windows SSL Detected...
@@ -98,8 +98,7 @@ if defined USE_CERT (
     echo [INFO] HTTPS Mode Enabled.
     echo Access: https://127.0.0.1:8000/
     echo ==========================================
-    cd backend
-    ..\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"
+    .\venv_prod\Scripts\uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --ssl-certfile="%USE_CERT%" --ssl-keyfile="%USE_KEY%"
     pause
     exit /b
 )
@@ -107,6 +106,6 @@ if defined USE_CERT (
 echo [WARN] SSL not found. Starting Standard Server (HTTP)...
 echo Access the system at: http://127.0.0.1:8000/
 echo ==========================================
-"%PYTHON_EXE%" backend\manage.py runserver 0.0.0.0:8000
+"%PYTHON_EXE%" manage.py runserver 0.0.0.0:8000
 
 pause
