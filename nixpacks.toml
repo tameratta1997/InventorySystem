@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python311", "postgresql", "gcc", "zlib", "libjpeg", "openjpeg", "pkg-config"]
-
-[phases.install]
-cmds = ["python -m pip install -U pip", "python -m pip install -r requirements.txt"]
-
-[start]
-cmd = "bash start.sh"
