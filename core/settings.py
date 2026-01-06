@@ -159,14 +159,14 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 # CSRF Trusted Origins
-csrf_trusted = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
-if csrf_trusted:
-    CSRF_TRUSTED_ORIGINS = csrf_trusted.split(",")
-else:
-    CSRF_TRUSTED_ORIGINS = [
-        "https://minint-5rjphna.tail9125c6.ts.net",
-        "https://127.0.0.1",
-        "http://localhost",
-        "http://127.0.0.1"
-    ]
+CSRF_TRUSTED_ORIGINS = ["https://minint-5rjphna.tail9125c6.ts.net", "https://127.0.0.1"]
+csrf_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if csrf_env:
+    for origin in csrf_env.split(","):
+        clean_origin = origin.strip()
+        if clean_origin and clean_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(clean_origin)
+
+# Automatically trust railway domains
+CSRF_TRUSTED_ORIGINS.append("https://*.up.railway.app")
 
