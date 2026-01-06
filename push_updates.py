@@ -27,7 +27,11 @@ def push_updates():
     print("EXEC: git commit")
     subprocess.run(["git", "commit", "-m", "Manual update request"], check=False)
 
-    # 3. Push
+    # 3. Pull (Rebase) to sync
+    print("EXEC: git pull --rebase origin main")
+    subprocess.run(["git", "pull", "--rebase", "origin", "main"], check=False)
+
+    # 4. Push
     print("EXEC: git push origin main")
     subprocess.run(["git", "push", "-u", "origin", "main"], check=False)
     print("Done.")
