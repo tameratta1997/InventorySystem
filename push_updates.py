@@ -28,8 +28,8 @@ def push_updates():
     subprocess.run(["git", "commit", "-m", "Manual update request"], check=False)
 
     # 3. Push
-    print("EXEC: git push")
-    subprocess.run(["git", "push"], check=False)
+    print("EXEC: git push origin main")
+    subprocess.run(["git", "push", "-u", "origin", "main"], check=False)
     print("Done.")
 
 if __name__ == "__main__":
