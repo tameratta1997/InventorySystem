@@ -12,5 +12,5 @@ sqlparse
 uvicorn
 whitenoise
 openpyxl
-dj-database-url
+dj-database-url<2.1.0
 psycopg2-binary
