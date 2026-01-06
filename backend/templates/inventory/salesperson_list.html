@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h1 style="font-size: 1.875rem; font-weight: 700;">Sales Staff</h1>
+    {% if request.user.is_superuser %}
+    <div>
+        <a href="{% url 'salesperson_import' %}" class="btn btn-secondary" style="margin-right: 0.5rem;">Import</a>
+        <a href="{% url 'salesperson_create' %}" class="btn btn-primary">+ Add Sales Person</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in sales_people %}
+                <tr>
+                    <td style="font-weight: 500;">{{ sp.name }}</td>
+                    <td>{{ sp.phone }}</td>
+                    <td>{{ sp.email|default:"-" }}</td>
+                    <td>
+                        {% if sp.is_active %}
+                        <span class="badge badge-green">Active</span>
+                        {% else %}
+                        <span class="badge badge-red">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if request.user.is_superuser %}
+                        <a href="{% url 'salesperson_update' sp.pk %}" class="btn"
+                            style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Edit</a>
+                        <a href="{% url 'salesperson_delete' sp.pk %}" class="btn btn-danger"
+                            style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Del</a>
+                        {% else %}
+                        <span class="text-muted" style="font-size: 0.75rem;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No sales staff found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h1 style="font-size: 1.875rem; font-weight: 700;">Point of Sale (POS)</h1>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- LEFT: Product Selection -->
+    <div class="card">
+        <h2 class="mb-4" style="font-size: 1.25rem;">Select Products</h2>
+        <input type="text" id="pos-search" class="form-input mb-4" placeholder="Search product name or code..."
+            oninput="filterProducts()">
+
+        <div style="max-height: 600px; overflow-y: auto;">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pos-product-list">
+                    {% for p in products %}
+                    <tr class="product-row" data-text="{{ p.name|lower }} {{ p.code|lower }}">
+                        <td>{{ p.code }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>${{ p.selling_price }}</td>
+                        <td>
+                            <span class="badge {% if p.quantity <= 0 %}badge-red{% else %}badge-green{% endif %}">
+                                {{ p.quantity }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if p.quantity > 0 %}
+                            <form method="POST" style="display: flex; align-items: center; gap: 5px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="product_id" value="{{ p.id }}">
+                                <input type="number" name="quantity" value="1" min="1" max="{{ p.quantity }}"
+                                    style="width: 50px; padding: 2px;" class="form-input">
+                                <button type="submit" class="btn btn-primary" style="padding: 2px 8px;">Add</button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RIGHT: Cart -->
+    <div class="card" style="height: fit-content; position: sticky; top: 1rem;">
+        <h2 class="mb-4" style="font-size: 1.25rem;">Current Cart</h2>
+
+        <div class="mb-4">
+            <h3 class="mb-2 font-bold">Select Customer</h3>
+            <form method="POST" style="flex: 1;" id="checkout-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="checkout">
+
+                <div class="flex" style="gap: 5px; margin-bottom: 1rem;">
+                    <select name="customer_id" class="form-select" required>
+                        <option value="">-- Select Customer --</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.name }} - {{ c.phone }}</option>
+                        {% endfor %}
+                    </select>
+                    <a href="{% url 'customer_create' %}?next={% url 'pos' %}" class="btn"
+                        style="background-color: #10B981; color: white;">+ New</a>
+                </div>
+
+                <h3 class="mb-2 font-bold">Select Sales Person</h3>
+                <div class="mb-4">
+                    <select name="sales_person_id" class="form-select" required>
+                        <option value="">-- Select Sales Person --</option>
+                        {% for sp in sales_people %}
+                        <option value="{{ sp.id }}">{{ sp.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Form continues below... -->
+            </form>
+        </div>
+
+        {% if cart %}
+        <div class="mb-4">
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item_id, item in cart.items %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.price }}</td>
+                        <!-- Display unit price or subtotal? Let's fix in view next time, here cart has unit price -->
+                        <td>
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove">
+                                <input type="hidden" name="product_id" value="{{ item_id }}">
+                                <button type="submit" style="color: red;">&times;</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="border-top: 2px solid #E5E7EB; padding-top: 1rem; margin-top: 1rem;">
+            <div class="flex justify-between" style="font-size: 1.25rem; font-weight: bold;">
+                <span>Total:</span>
+                <span>${{ cart_total|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="flex mt-4" style="gap: 1rem;">
+            <form method="POST" style="flex: 1;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="clear">
+                <button type="submit" class="btn w-full" style="background-color: #EF4444; color: white;">Clear</button>
+            </form>
+            <button type="submit" form="checkout-form" class="btn btn-primary w-full">Checkout</button>
+        </div>
+
+        {% else %}
+        <p class="text-muted text-center py-8">Cart is empty.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function filterProducts() {
+        const input = document.getElementById('pos-search').value.toLowerCase();
+        const rows = document.querySelectorAll('.product-row');
+
+        rows.forEach(row => {
+            const text = row.getAttribute('data-text');
+            if (text.includes(input)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

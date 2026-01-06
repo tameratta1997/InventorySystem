@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h1>{{ title }}</h1>
+    <a href="{% url 'product_list' %}" class="btn"
+        style="background: transparent; border: 1px solid var(--border-color);">Cancel</a>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="mb-4 text-danger">
+            Please correct the errors below.
+        </div>
+        {% endif %}
+
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Product Name</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Barcode / Code</label>
+                {{ form.code }}
+            </div>
+        </div>
+
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                {{ form.category }}
+                <small class="text-muted">Manage categories in Admin panel.</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Supplier Name</label>
+                {{ form.supplier_name }}
+            </div>
+        </div>
+
+        <div class="grid-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Purchase Price</label>
+                {{ form.purchase_price }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Selling Price</label>
+                {{ form.selling_price }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Initial Qty</label>
+                {{ form.quantity }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Min Stock Alert</label>
+                {{ form.min_stock_alert }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Product Image</label>
+            {{ form.image }}
+        </div>
+
+        <div style="margin-top: 2rem; text-align: right;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">Save Product</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

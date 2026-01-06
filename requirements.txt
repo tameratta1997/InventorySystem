@@ -1,0 +1,14 @@
+asgiref
+click
+Django>=4.2.0,<6.0.0
+django-cors-headers
+django-extensions
+djangorestframework
+gunicorn
+h11
+packaging
+pillow
+sqlparse
+uvicorn
+whitenoise
+openpyxl

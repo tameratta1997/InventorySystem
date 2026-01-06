@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-title">📦 InventorySys</div>
+            <nav>
+                <a href="{% url 'dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{% url 'product_list' %}"
+                    class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                    Products
+                </a>
+                <a href="{% url 'category_list' %}"
+                    class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                    Categories
+                </a>
+                {% if request.user.is_superuser %}
+                <a href="{% url 'user_list' %}"
+                    class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}">Users</a>
+                {% endif %}
+                <a href="{% url 'pos' %}"
+                    class="nav-link {% if 'pos' in request.resolver_match.url_name %}active{% endif %}">
+                    🛒 New Sale (POS)
+                </a>
+                <a href="{% url 'purchase' %}"
+                    class="nav-link {% if 'purchase' in request.resolver_match.url_name %}active{% endif %}">
+                    🚚 Add Stock
+                </a>
+                <a href="{% url 'reports' %}"
+                    class="nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}">
+                    📊 Reports
+                </a>
+                <a href="{% url 'customer_list' %}"
+                    class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                    👥 Customers
+                </a>
+                <a href="{% url 'salesperson_list' %}"
+                    class="nav-link {% if 'salesperson' in request.resolver_match.url_name %}active{% endif %}">
+                    👔 Sales Staff
+                </a>
+            </nav>
+            <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid #374151;">
+                <div style="font-size: 0.875rem; color: #9CA3AF;">
+                    Logged in as <br>
+                    <strong style="color: white;">{{ request.user.username }}</strong>
+                </div>
+                <form action="{% url 'logout' %}" method="post" style="margin-top: 0.5rem;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link"
+                        style="background: none; border: none; padding: 0.75rem 1rem; color: #F87171; width: 100%; text-align: left; cursor: pointer;">
+                        Logout
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Developer Credit -->
+            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #374151; text-align: center;">
+                <span style="display: block; font-size: 0.7rem; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Developed By</span>
+                <span style="background: linear-gradient(135deg, #60A5FA 0%, #A78BFA 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 0.95rem; font-family: sans-serif; letter-spacing: 0.5px;">Tamer Elwakeel</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="card"
+                    style="padding: 1rem; background-color: #EEF2FF; border-left: 4px solid var(--primary-color);">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+
+</html>

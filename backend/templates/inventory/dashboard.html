@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 style="font-size: 1.875rem; font-weight: 700; color: var(--text-main);">Dashboard</h1>
+    <p class="text-muted">Overview of your inventory status.</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid-4 mb-4">
+    <div class="card">
+        <div class="card-title">Total Products</div>
+        <div class="card-value">{{ total_products }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Stock Value</div>
+        <div class="card-value">${{ total_stock_value|floatformat:2 }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Low Stock Alert</div>
+        <div class="card-value" style="color: var(--danger-color);">{{ low_stock_count }}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Active Users</div>
+        <div class="card-value">{{ active_users_count }}</div>
+    </div>
+</div>
+
+<div class="grid-4" style="grid-template-columns: 2fr 1fr;">
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="flex justify-between items-center mb-4">
+            <h3 style="font-size: 1.125rem; font-weight: 600;">Recent Transactions</h3>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Transaction #</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in recent_transactions %}
+                    <tr style="cursor: pointer;" onclick="openTransactionDetail('{{ t.type }}', {{ t.id }})">
+                        <td>{{ t.date|date:"M d, H:i" }}</td>
+                        <td style="font-weight: 600; color: var(--primary-color);">{{ t.order_id }}</td>
+                        <td>
+                            <span class="badge {% if t.type == 'Sale' %}badge-green{% else %}badge-red{% endif %}">
+                                {{ t.type }}
+                            </span>
+                        </td>
+                        <td>${{ t.amount }}</td>
+                        <td>{{ t.user.username }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted);">No recent transactions.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function openTransactionDetail(type, id) {
+            // Open a small popup window
+            const url = `/transaction/${type.toLowerCase()}/${id}/`;
+            window.open(url, 'Transaction Detail', 'width=800,height=600,resizable=yes,scrollbars=yes');
+        }
+    </script>
+
+    <!-- Low Stock List -->
+    <div class="card">
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; color: var(--danger-color);">⚠️ Low Stock
+        </h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in low_stock_products %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">{{ p.name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ p.code }}</div>
+                        </td>
+                        <td class="text-danger" style="font-weight: 700;">{{ p.quantity }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-muted">All stocks healthy.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
