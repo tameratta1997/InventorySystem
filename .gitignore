@@ -26,3 +26,13 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
+
+# Custom
+mingit/
+*.zip
+*.lnk
+backups/
+staticfiles/
+*.crt
+*.key
+
