@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Inventory Manager</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
 <body
@@ -35,8 +36,8 @@
                     <input type="password" name="password" id="id_password" class="form-input" required
                         style="padding-right: 60px; width: 100%;">
                     <button type="button" id="togglePassword"
-                        style="position: absolute; right: 8px; background: none; border: none; color: #4F46E5; cursor: pointer; font-weight: 600; font-size: 0.75rem;">
-                        SHOW
+                        style="position: absolute; right: 12px; background: none; border: none; color: #6B7280; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center;">
+                        <i class="bi bi-eye-slash" id="eyeIcon"></i>
                     </button>
                 </div>
             </div>
@@ -52,7 +53,14 @@
         togglePassword.addEventListener('click', function () {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
-            this.textContent = type === 'password' ? 'SHOW' : 'HIDE';
+
+            // Toggle the eye icon
+            const eyeIcon = document.querySelector('#eyeIcon');
+            if (type === 'password') {
+                eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
         });
     </script>
 </body>
