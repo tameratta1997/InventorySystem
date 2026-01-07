@@ -31,13 +31,30 @@
 
             <div class="form-group">
                 <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-input" required>
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="password" name="password" id="id_password" class="form-input" required
+                        style="padding-right: 60px; width: 100%;">
+                    <button type="button" id="togglePassword"
+                        style="position: absolute; right: 8px; background: none; border: none; color: #4F46E5; cursor: pointer; font-weight: 600; font-size: 0.75rem;">
+                        SHOW
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
         </form>
     </div>
 
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#id_password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'SHOW' : 'HIDE';
+        });
+    </script>
 </body>
 
 </html>
